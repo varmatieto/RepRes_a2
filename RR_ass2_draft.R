@@ -30,13 +30,19 @@ names(SD)
 ##########first operation : choose only relevant columns
 
 
-rel_cols = c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "PROPDMGEXP", 
+rel_cols = c("EVTYPE", "BGN_DATE", "STATE", "FATALITIES", "INJURIES", "PROPDMG", "PROPDMGEXP", 
                   "CROPDMG", "CROPDMGEXP")
 SD_clean <- SD[, which(names(SD) %in% rel_cols)]
 
 str(SD_clean)
 dim(SD_clean)
 
+##########and take year only 
+
+
+SD_clean$BGN_DATE <- as.Date(SD_clean$BGN_DATE, "%m/%d/%Y ")
+
+SD_clean$BGN_DATE <- format (SD_clean$BGN_DATE[1], "%Y")
 ##########second operation : recalculate damages using magnifier 
 
 
@@ -74,6 +80,7 @@ summary (SD_clean$CROPDMG )
 head(SD_clean)
 
 
+
 ##########third operation : look at event type and partially clean it
 
 
@@ -100,7 +107,8 @@ library (ggplot2)
 
 ggplot( neventsdf, aes(x= nomi, y=nevents) ) +
 geom_bar(stat="identity") + coord_flip() 
-ggsave ("obs_events.png")
+
+ggsave (plot/"obs_events.png")
 
 
 levents <- lapply (events, function(x) unique(SD_clean$EVTYPE[grep(x,SD_clean$EVTYPE)]) )
@@ -166,7 +174,7 @@ SD_clean[SD_clean$EVTYPE == "MARINE TSTM WIND",]$EVTYPE <- "MARINE THUNDERSTORM 
 head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
 
 
-head(SD_clean[c(1:4,6)])
+head(SD_clean[c(1:6,8)])
 
 write.table(SD_clean[c(1:4,6)],"data/SD_clean.txt", sep=";")
 
