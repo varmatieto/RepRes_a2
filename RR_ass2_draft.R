@@ -154,12 +154,10 @@ SD_clean<- read.table ("data/SD_clean.txt" , header=T, sep=";",
 
 str(SD_clean)
 
-
-
-
 library (plyr)
 
 SDET<-ddply(SD_clean, .(EVTYPE,BGN_DATE,STATE), summarise,
+            nobs= length(STATE),
             qFA= sum(FATALITIES),
             qIN= sum(INJURIES),
             qPR= sum(PROPDMG),
@@ -175,42 +173,122 @@ summary(SDET$qCR)
 
 write.table(SDET,"data/SDET.txt", sep=";")
 
+table(SDET$EVTYPE) # 1120/14572 cioe' 7%
+table(SD_clean$EVTYPE) # 35838/902297 cioe' 4%
 
-###################
-plot(SDET$qFA,SDET$qIN)
+##############   PRINTING   #####
 
-SDETT<-SDET[SDET$EVTYPE!= "TORNADO",]
-
-plot(SDETT$qFA,SDETT$qIN)
-
-SDETm<-SDET[SDET$qFA>400,]
-
-SDETm<-SDETm[order(SDETm$qFA),]
-
-SDETm
-
-SDETm<-SDETm[order(SDETm$qIN),]
-
-SDETm
+SDET<- read.table ("data/SDET.txt" , header=T, sep=";",  
+                       stringsAsFactors=F)
 
 
-plot(SDETm$qFA,SDETm$qIN)
+str(SDET)
+colnames(SDET)
 
-SDETmT<-SDETm[SDETm$EVTYPE!= "TORNADO",]
-
-plot(SDETmT$qFA,SDETmT$qIN)
-
-############################
-
-plot(SDET$qPR,SDET$qCR)
-
-SDETp<-SDET[SDET$qPR>500000,]
-SDETp<-SDETp[order(SDETp$qPR),]
-SDETp
-
-plot(SDETp$qPR,SDETp$qCR)
+SDET <- SDET[order(SDET$BGN_DATE,SDET$EVTYPE ),]
+fix(SDET)
 
 
+
+
+# "EVTYPE"   "BGN_DATE" "STATE"    "nobs"   "qFA"      "qIN"  "qPR"  "qCR"   
+
+library (ggplot2)
+
+ggplot( SDET, aes(x= EVTYPE, fill=EVTYPE) ) +
+  geom_bar( show_guide = F) + coord_flip() +
+  ggtitle("total obs. by event") 
+#  xlab("Date") + ylab( "n. steps")
+
+ggsave ("plot/SDET_obs.png")
+
+
+SDET <- SDET[order(SDET$BGN_DATE),]
+
+ggplot( SDET, aes(x= EVTYPE, y=nobs/1000, fill=EVTYPE) ) +
+  geom_bar(stat="identity", show_guide = F ) + coord_flip() +
+  ggtitle("total events by event") 
+
+ggsave ("plot/SDET_events.png")
+
+
+ggplot( SDET, aes(x=BGN_DATE, y=nobs/1000, fill=EVTYPE ) ) +
+  geom_bar(stat="identity") +
+  ggtitle("total events by year") 
+
+ggsave ("plot/obs_year.png")
+
+SDET <- SDET[order(SDET$STATE,SDET$EVTYPE ),]
+ggplot( SDET, aes(x=STATE, y=nobs/1000, fill=EVTYPE ) ) +
+  geom_bar(stat="identity") + coord_flip() +
+  ggtitle("total events by state") 
+
+ggsave ("plot/obs_state.png")
+
+
+ggplot( SDET, aes(x=EVTYPE, y=qIN, fill=EVTYPE ) ) +
+  geom_bar(stat="identity", show_guide = F ) + coord_flip() +
+  ggtitle("total injured by event") 
+
+ggsave ("plot/injured_ev.png")
+
+
+
+ggplot( SDET, aes(x=EVTYPE, y=qFA, fill=EVTYPE ) ) +
+  geom_bar(stat="identity", show_guide = F ) + coord_flip() +
+  ggtitle("total casualties by event") 
+
+ggsave ("plot/casualties.png")
+
+
+
+ggplot( SDET, aes(x=EVTYPE, y=qPR, fill=EVTYPE ) ) +
+  geom_bar(stat="identity", show_guide = F ) + coord_flip() +
+  ggtitle("total damages by event") 
+
+ggsave ("plot/damages.png")
+
+
+ggplot( SDET, aes(x=EVTYPE, y=qCR, fill=EVTYPE ) ) +
+  geom_bar(stat="identity", show_guide = F ) + coord_flip() +
+  ggtitle("total crops by event") 
+
+ggsave ("plot/crops.png")
+
+
+################################
+str(SDETx)
+
+SDETx <- SDET[SDET$EVTYPE=="mixevents",]
+
+ggplot( SDETx, aes(x=BGN_DATE, y=nobs/1000, fill="#FF0000" ) ) +
+  geom_bar(stat="identity") +
+  ggtitle("events mix by year") 
+
+ggplot( SDETx, aes(x=BGN_DATE, y=qFA) ) +
+  geom_bar(stat="identity", fill="#FF0000", show_guide = F  ) +
+  ggtitle("casualties mix by year") 
+
+ggplot( SDETx, aes(x=BGN_DATE, y=qIN) ) +
+  geom_bar(stat="identity", fill="#FF00FF", show_guide = F  ) +
+  ggtitle("injured mix by year") 
+
+ggplot( SDETx, aes(x=BGN_DATE, y=qPR) ) +
+  geom_bar(stat="identity", fill="#FF00FF", show_guide = F  ) +
+  ggtitle("damages mix by year") 
+
+ggplot( SDETx, aes(x=BGN_DATE, y=qCR) ) +
+  geom_bar(stat="identity", fill="#FF00FF", show_guide = F  ) +
+  ggtitle("crops mix by year") 
+
+
+# problems in damages 2005 crops 1994 1995
+
+table(SDETx$BGN_DATE)
+
+SDETx05 <- SDETx[SDETx$BGN_DATE==2005,]
+fix (SDETx05)
+##################################################################################
 
 
 ############################### DA VEDERE POI ####################################
@@ -353,3 +431,37 @@ table(SD$PROPDMGEXP)
 summary(SD$PROPDMG)
 summary(SD$CROPDMG)
 
+
+
+plot(SDET$qFA,SDET$qIN)
+
+SDETT<-SDET[SDET$EVTYPE!= "TORNADO",]
+
+plot(SDETT$qFA,SDETT$qIN)
+
+SDETm<-SDET[SDET$qFA>400,]
+
+SDETm<-SDETm[order(SDETm$qFA),]
+
+SDETm
+
+SDETm<-SDETm[order(SDETm$qIN),]
+
+SDETm
+
+
+plot(SDETm$qFA,SDETm$qIN)
+
+SDETmT<-SDETm[SDETm$EVTYPE!= "TORNADO",]
+
+plot(SDETmT$qFA,SDETmT$qIN)
+
+############################
+
+plot(SDET$qPR,SDET$qCR)
+
+SDETp<-SDET[SDET$qPR>500000,]
+SDETp<-SDETp[order(SDETp$qPR),]
+SDETp
+
+plot(SDETp$qPR,SDETp$qCR)
