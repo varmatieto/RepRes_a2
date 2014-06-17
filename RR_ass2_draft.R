@@ -35,7 +35,7 @@ rel_cols = c("EVTYPE", "BGN_DATE", "STATE", "FATALITIES", "INJURIES", "PROPDMG",
 SD_clean <- SD[, which(names(SD) %in% rel_cols)]
 
 str(SD_clean)
-dim(SD_clean)
+dimclean<-dim(SD_clean)[1]
 
 ##########and take year only 
 
@@ -84,113 +84,32 @@ head(SD_clean)
 ##########third operation : look at event type and partially clean it
 
 
-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+kevents<-names(headevents)
+barplot(headevents)
+
+sumh<-sum(headevents)
+
+wind<- c(2,3,7,8,18)
+flood<-c(5,6,17,19)
+winter<-c(12,13)
+marinestorm <-c(15,16)
+
+kevents[wind]<-"strong wind"
+kevents[flood]<-"flood"
+kevents[winter]<-"winter weather"
+kevents[marinestorm]<-"marinestorm"
+
+unique(kevents)
 
 
-events<-c("WINDS?", "FLOODS?", "WATERS?", "RAINS?", "WINT", "SNOW", "CLOUDS?",
-          "TEMP" , "HAILS?", "LIGHTNINGS?", "FIRES?", "FLD", "TORNADOS?")
+mywind<-names(headevents)[wind]
 
-nevents<-sapply (events, function(x) length(SD_clean$EVTYPE[grep(x,SD_clean$EVTYPE)]) )
+length(SD_clean[SD_clean$EVTYPE %in% names(headevents)[marinestorm],]$EVTYPE) 
 
-nevents
-nomi <- names(nevents)
-sum(nevents)
-
-neventsdf <- as.data.frame(nevents)
-neventsdf <- cbind(neventsdf, nomi)
+(dimclean-sumh)/dimclean # 97% obs in first 20 labels
 
 
-names(nevents)
-head(neventsdf)
-
-library (ggplot2)
-
-ggplot( neventsdf, aes(x= nomi, y=nevents) ) +
-geom_bar(stat="identity") + coord_flip() 
-
-ggsave (plot/"obs_events.png")
-
-
-levents <- lapply (events, function(x) unique(SD_clean$EVTYPE[grep(x,SD_clean$EVTYPE)]) )
-names(levents) <-events
-
-levents
-
-names(nevents)
-
-sumevents <- sapply (events, function(x) sum(length( levents[[x]])))
-
-sum(sumevents)
-
-sum(levents [["WINDS?"]]%in%levents [["FLOODS?"]])
-sum(levents [["FLOODS"]]%in%levents [["WATERS?"]])
-
-
-barplot(nevents)
-
-length(SD_clean$EVTYPE[grep('WINDS?',SD_clean$EVTYPE)])
-# 364k obs. = 1/3 of all obs. has word "WIND"
-
-unique(SD_clean$EVTYPE[grep('WINDS?',SD_clean$EVTYPE)])
-unique(grep('WINDS?',SD_clean$EVTYPE, value=T))
-
-###########################
-length(SD_clean$EVTYPE[grep('FLOODS?',SD_clean$EVTYPE)])
-# 82k obs. = 1/3 of all obs. has word "FLOOD"
-
-unique(SD_clean$EVTYPE[grep('FLOODS?',SD_clean$EVTYPE)])
-
-###################################################
-
-length(SD_clean$EVTYPE[grep('WATERS?',SD_clean$EVTYPE)])
-# 82k obs. = 1/3 of all obs. has word "FLOOD"
-
-unique(SD_clean$EVTYPE[grep('WATERS?',SD_clean$EVTYPE)])
-##########################
-
-length(SD_clean$EVTYPE[grep('RAINS?',SD_clean$EVTYPE)])
-# 82k obs. = 1/3 of all obs. has word "FLOOD"
-
-unique(SD_clean$EVTYPE[grep('RAINS?',SD_clean$EVTYPE)])
-##########################
-
-
-
-length(SD_clean$EVTYPE[grep('FIRES?',SD_clean$EVTYPE)])
-# 82k obs. = 1/3 of all obs. has word "FLOOD"
-
-unique(SD_clean$EVTYPE[grep('FIRES?',SD_clean$EVTYPE)])
-
-
-
-SD_clean[SD_clean$EVTYPE == "TSTM WIND",]$EVTYPE <- "THUNDERSTORM WIND"
-SD_clean[SD_clean$EVTYPE == "THUNDERSTORM WINDS",]$EVTYPE <- "THUNDERSTORM WIND"
-SD_clean[SD_clean$EVTYPE == "RIP CURRENT",]$EVTYPE <- "RIP CURRENTS"
-SD_clean[SD_clean$EVTYPE == "STRONG WIND",]$EVTYPE <- "HIGH WIND"
-SD_clean[SD_clean$EVTYPE == "HIGH WINDS",]$EVTYPE <- "HIGH WIND"
-SD_clean[SD_clean$EVTYPE == "MARINE TSTM WIND",]$EVTYPE <- "MARINE THUNDERSTORM WIND"
-
-
-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
-
-
-head(SD_clean[c(1:6,8)])
-
-write.table(SD_clean[c(1:4,6)],"data/SD_clean.txt", sep=";")
-
-length(grep('WIND\\w+',SD_clean$EVTYPE))
-
-grep('STR\\w+\\s+WI*ND',d2$EVTYPE)
-
-unique(SD_clean$EVTYPE[grep('WIND\\w+',SD_clean$EVTYPE)])
-unique(SD_clean$EVTYPE[grep('WIND*',SD_clean$EVTYPE)])
-
-unique(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
-length(SD_clean$EVTYPE[grep('^HIGH WINDS?',SD_clean$EVTYPE)])
-
-unique(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
-
-length(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
 
 ######################################################################
 
@@ -308,4 +227,109 @@ for (i in 1:dimSD ){
     exc_a <- names(conversion_factor) [sapply(conversion_factor,function(x) exc%in%x)]
     SD_clean$CROPDMGEXP[i] <- exc_a
 }
+
+events<-c("WINDS?", "FLOODS?", "WATERS?", "RAINS?", "WINT", "SNOW", "CLOUDS?",
+          "TEMP" , "HAILS?", "LIGHTNINGS?", "FIRES?", "FLD", "TORNADOS?")
+
+nevents<-sapply (events, function(x) length(SD_clean$EVTYPE[grep(x,SD_clean$EVTYPE)]) )
+
+nevents
+nomi <- names(nevents)
+sum(nevents)
+
+neventsdf <- as.data.frame(nevents)
+neventsdf <- cbind(neventsdf, nomi)
+
+
+names(nevents)
+head(neventsdf)
+
+library (ggplot2)
+
+ggplot( neventsdf, aes(x= nomi, y=nevents) ) +
+    geom_bar(stat="identity") + coord_flip() 
+
+ggsave (plot/"obs_events.png")
+
+
+levents <- lapply (events, function(x) unique(SD_clean$EVTYPE[grep(x,SD_clean$EVTYPE)]) )
+names(levents) <-events
+
+levents
+
+names(nevents)
+
+sumevents <- sapply (events, function(x) sum(length( levents[[x]])))
+
+sum(sumevents)
+
+sum(levents [["WINDS?"]]%in%levents [["FLOODS?"]])
+sum(levents [["FLOODS"]]%in%levents [["WATERS?"]])
+
+
+barplot(nevents)
+
+length(SD_clean$EVTYPE[grep('WINDS?',SD_clean$EVTYPE)])
+# 364k obs. = 1/3 of all obs. has word "WIND"
+
+unique(SD_clean$EVTYPE[grep('WINDS?',SD_clean$EVTYPE)])
+unique(grep('WINDS?',SD_clean$EVTYPE, value=T))
+
+###########################
+length(SD_clean$EVTYPE[grep('FLOODS?',SD_clean$EVTYPE)])
+# 82k obs. = 1/3 of all obs. has word "FLOOD"
+
+unique(SD_clean$EVTYPE[grep('FLOODS?',SD_clean$EVTYPE)])
+
+###################################################
+
+length(SD_clean$EVTYPE[grep('WATERS?',SD_clean$EVTYPE)])
+# 82k obs. = 1/3 of all obs. has word "FLOOD"
+
+unique(SD_clean$EVTYPE[grep('WATERS?',SD_clean$EVTYPE)])
+##########################
+
+length(SD_clean$EVTYPE[grep('RAINS?',SD_clean$EVTYPE)])
+# 82k obs. = 1/3 of all obs. has word "FLOOD"
+
+unique(SD_clean$EVTYPE[grep('RAINS?',SD_clean$EVTYPE)])
+##########################
+
+
+
+length(SD_clean$EVTYPE[grep('FIRES?',SD_clean$EVTYPE)])
+# 82k obs. = 1/3 of all obs. has word "FLOOD"
+
+unique(SD_clean$EVTYPE[grep('FIRES?',SD_clean$EVTYPE)])
+
+
+
+SD_clean[SD_clean$EVTYPE == "TSTM WIND",]$EVTYPE <- "THUNDERSTORM WIND"
+SD_clean[SD_clean$EVTYPE == "THUNDERSTORM WINDS",]$EVTYPE <- "THUNDERSTORM WIND"
+SD_clean[SD_clean$EVTYPE == "RIP CURRENT",]$EVTYPE <- "RIP CURRENTS"
+SD_clean[SD_clean$EVTYPE == "STRONG WIND",]$EVTYPE <- "HIGH WIND"
+SD_clean[SD_clean$EVTYPE == "HIGH WINDS",]$EVTYPE <- "HIGH WIND"
+SD_clean[SD_clean$EVTYPE == "MARINE TSTM WIND",]$EVTYPE <- "MARINE THUNDERSTORM WIND"
+
+
+head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+
+
+head(SD_clean[c(1:6,8)])
+
+write.table(SD_clean[c(1:4,6)],"data/SD_clean.txt", sep=";")
+
+length(grep('WIND\\w+',SD_clean$EVTYPE))
+
+grep('STR\\w+\\s+WI*ND',d2$EVTYPE)
+
+unique(SD_clean$EVTYPE[grep('WIND\\w+',SD_clean$EVTYPE)])
+unique(SD_clean$EVTYPE[grep('WIND*',SD_clean$EVTYPE)])
+
+unique(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
+length(SD_clean$EVTYPE[grep('^HIGH WINDS?',SD_clean$EVTYPE)])
+
+unique(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
+
+length(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
 
