@@ -42,7 +42,10 @@ dimclean<-dim(SD_clean)[1]
 
 SD_clean$BGN_DATE <- as.Date(SD_clean$BGN_DATE, "%m/%d/%Y ")
 
-SD_clean$BGN_DATE <- format (SD_clean$BGN_DATE[1], "%Y")
+SD_clean$BGN_DATE <- format (SD_clean$BGN_DATE, "%Y")
+
+table(SD_clean$BGN_DATE )
+
 ##########second operation : recalculate damages using magnifier 
 
 
@@ -77,11 +80,19 @@ summary (SD_clean$PROPDMG )
 summary (SD$CROPDMG )
 summary (SD_clean$CROPDMG )
 
-head(SD_clean)
+str(SD_clean)
+head(SD_clean)[c(-7,-9)]
 
-
+SD_clean<-SD_clean[c(-7,-9)]
 
 ##########third operation : look at event type and partially clean it
+# there are 985different EVENT TYPE 
+
+length(unique(SD$EVTYPE))
+
+main_EV<-head(sort(table(SD$EVTYPE), decreasing=TRUE), n=20)
+
+barplot(main_EV[main_EV>10000])
 
 
 headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
@@ -89,6 +100,9 @@ kevents<-names(headevents)
 barplot(headevents)
 
 sumh<-sum(headevents)
+(dimclean-sumh)/dimclean # 97% obs in first 20 labels
+
+
 
 wind<- c(2,3,7,8,18)
 flood<-c(5,6,17,19)
@@ -99,17 +113,38 @@ kevents[wind]<-"strong wind"
 kevents[flood]<-"flood"
 kevents[winter]<-"winter weather"
 kevents[marinestorm]<-"marinestorm"
-
-unique(kevents)
-
-
 mywind<-names(headevents)[wind]
 
 length(SD_clean[SD_clean$EVTYPE %in% names(headevents)[marinestorm],]$EVTYPE) 
 
-(dimclean-sumh)/dimclean # 97% obs in first 20 labels
+unique(kevents)
+
+kevent_tranf <- list("wind"= c(2,3,7,8,18),
+            "flood"=c(5,6,17,19),
+            "winter"=c(12,13),
+            "marinestorm" =c(15,16))
+
+names(kevent_tranf)
+
+# two key operations:
+# set as other for the 3% which is not in the 20 key events
+# simplify list of key events
+
+SD_clean$EVTYPE[!(SD_clean$EVTYPE %in% kevents)]<-c("mixevents") 
+
+for (i in 1:4){
+    
+    ivents<-kevents[kevent_tranf[[i]]]
+    SD_clean$EVTYPE [SD_clean$EVTYPE %in% ivents ]<-names (kevent_tranf[i])
+}
+
+headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+
+sum(headevents)
+str(SD_clean)
 
 
+write.table(SD_clean,"data/SD_clean.txt", sep=";")
 
 ######################################################################
 
@@ -119,60 +154,27 @@ SD_clean<- read.table ("data/SD_clean.txt" , header=T, sep=";",
 
 str(SD_clean)
 
-# there are 980 different EVENT TYPE 
-length(unique(SD_clean$EVTYPE))
-
-main_EV<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
-
-barplot(main_EV[main_EV>10000])
-
-
-
-
-
-
-
-
-
-
-
-
-
-# there are 985 different EVENT TYPE 
-
-str(fEV)
-max(levels(fEV))
-
-levels(fEV)[1:10]
-fEV[1:10]
-levels(fEV)
-
-levels(fEV)[table(fEV)>5000]
-
-table(SD$FATALITIES, SD$EVTYPE)
-
-hist(log(SD$FATALITIES))
-
-table(SD$PROPDMGEXP)
-summary(SD$PROPDMG)
-summary(SD$CROPDMG)
 
 
 
 library (plyr)
 
-SDET<-ddply(SD, .(EVTYPE), summarise,
+SDET<-ddply(SD_clean, .(EVTYPE,BGN_DATE,STATE), summarise,
             qFA= sum(FATALITIES),
             qIN= sum(INJURIES),
             qPR= sum(PROPDMG),
             qCR= sum(CROPDMG)    
             )
 str(SDET)
+head(SDET)
 
 summary(SDET$qFA)
 summary(SDET$qIN)
 summary(SDET$qPR)
 summary(SDET$qCR)
+
+write.table(SDET,"data/SDET.txt", sep=";")
+
 
 ###################
 plot(SDET$qFA,SDET$qIN)
@@ -317,7 +319,6 @@ head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
 
 head(SD_clean[c(1:6,8)])
 
-write.table(SD_clean[c(1:4,6)],"data/SD_clean.txt", sep=";")
 
 length(grep('WIND\\w+',SD_clean$EVTYPE))
 
@@ -332,4 +333,23 @@ length(SD_clean$EVTYPE[grep('^HIGH WINDS?',SD_clean$EVTYPE)])
 unique(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
 
 length(SD_clean$EVTYPE[grep('^HIGH WINDS? \\d',SD_clean$EVTYPE)])
+
+# there are 985 different EVENT TYPE 
+
+str(fEV)
+max(levels(fEV))
+
+levels(fEV)[1:10]
+fEV[1:10]
+levels(fEV)
+
+levels(fEV)[table(fEV)>5000]
+
+table(SD$FATALITIES, SD$EVTYPE)
+
+hist(log(SD$FATALITIES))
+
+table(SD$PROPDMGEXP)
+summary(SD$PROPDMG)
+summary(SD$CROPDMG)
 
