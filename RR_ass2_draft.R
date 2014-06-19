@@ -3,21 +3,16 @@
 #Bike-Sharing-Dataset.zip", "ProjectData/Bike-Sharing-Dataset.zip")
 
 
-url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+url<- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
 
 dir("data")
 
-if (!file.exists("data/repdata_data_StormData.cvs.bz2")) {
-    download.file(url, "data/repdata_data_StormData.cvs.bz2", method = "curl")  
+if(!file.exists('data/stormdata.csv.bz2')){
+    download.file(url,'data/stormdata.csv.bz2',method='internal')
 }
 
+SD <- read.csv('data/stormdata.csv.bz2', stringsAsFactors = F)
 
-    unzip("data/repdata_data_StormData.cvs.bz2", exdir = "data")
-    
-
-SD<- read.table ("repdata_data_StormData.csv" , header=T, sep=",",  
-                 stringsAsFactors=F)
-    file.remove("repdata_data_StormData.csv")
 
 
 
@@ -69,8 +64,8 @@ conversion_factor = list(`0` = c("", "-", "?", "+", "0"),
 levels(SD_clean$PROPDMGEXP) <- conversion_factor
 levels(SD_clean$CROPDMGEXP) <- conversion_factor
 
-table(SD_clean$PROPDMGEXP)
-table(SD_clean$CROPDMGEXP)
+#table(SD_clean$PROPDMGEXP)
+#table(SD_clean$CROPDMGEXP)
 
 SD_clean$PROPDMG = SD_clean$PROPDMG * (10^(as.integer(as.character(SD_clean$PROPDMGEXP))))
 SD_clean$CROPDMG = SD_clean$CROPDMG * (10^(as.integer(as.character(SD_clean$CROPDMGEXP))))
@@ -83,74 +78,21 @@ summary (SD_clean$CROPDMG )
 str(SD_clean)
 head(SD_clean)[c(-7,-9)]
 
-SD_clean<-SD_clean[c(-7,-9)]
+# SD_clean<-SD_clean[c(-7,-9)]
 
 ##########third operation : look at event type and partially clean it
 # there are 985different EVENT TYPE 
 
-length(unique(SD$EVTYPE))
-
-main_EV<-head(sort(table(SD$EVTYPE), decreasing=TRUE), n=20)
-
-barplot(main_EV[main_EV>10000])
 
 
-headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=30)
 kevents<-names(headevents)
-barplot(headevents)
-
+headevents
+kevents
 sumh<-sum(headevents)
-(dimclean-sumh)/dimclean # 97% obs in first 20 labels
 
+per30obs<-round ((sumh/dimclean)*100,1) # 97% obs in first 20 labels
 
-
-wind<- c(2,3,7,8,18)
-flood<-c(5,6,17,19)
-winter<-c(12,13)
-marinestorm <-c(15,16)
-
-kevents[wind]<-"strong wind"
-kevents[flood]<-"flood"
-kevents[winter]<-"winter weather"
-kevents[marinestorm]<-"marinestorm"
-mywind<-names(headevents)[wind]
-
-length(SD_clean[SD_clean$EVTYPE %in% names(headevents)[marinestorm],]$EVTYPE) 
-
-unique(kevents)
-
-kevent_tranf <- list("wind"= c(2,3,7,8,18),
-            "flood"=c(5,6,17,19),
-            "winter"=c(12,13),
-            "marinestorm" =c(15,16))
-
-names(kevent_tranf)
-
-# two key operations:
-# set as other for the 3% which is not in the 20 key events
-# simplify list of key events
-
-SD_clean$EVTYPE[!(SD_clean$EVTYPE %in% kevents)]<-c("mixevents") 
-
-for (i in 1:4){
-    
-    ivents<-kevents[kevent_tranf[[i]]]
-    SD_clean$EVTYPE [SD_clean$EVTYPE %in% ivents ]<-names (kevent_tranf[i])
-}
-
-headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
-
-sum(headevents)
-str(SD_clean)
-
-
-write.table(SD_clean,"data/SD_clean.txt", sep=";")
-
-######################################################################
-
-
-SD_clean<- read.table ("data/SD_clean.txt" , header=T, sep=";",  
-                 stringsAsFactors=F)
 
 str(SD_clean)
 
@@ -465,3 +407,68 @@ SDETp<-SDETp[order(SDETp$qPR),]
 SDETp
 
 plot(SDETp$qPR,SDETp$qCR)
+
+
+length(unique(SD$EVTYPE))
+
+main_EV<-head(sort(table(SD$EVTYPE), decreasing=TRUE), n=20)
+
+barplot(main_EV[main_EV>10000])
+
+
+headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+kevents<-names(headevents)
+barplot(headevents)
+
+sumh<-sum(headevents)
+(dimclean-sumh)/dimclean # 97% obs in first 20 labels
+
+
+
+wind<- c(2,3,7,8,18)
+flood<-c(5,6,17,19)
+winter<-c(12,13)
+marinestorm <-c(15,16)
+
+kevents[wind]<-"strong wind"
+kevents[flood]<-"flood"
+kevents[winter]<-"winter weather"
+kevents[marinestorm]<-"marinestorm"
+mywind<-names(headevents)[wind]
+
+length(SD_clean[SD_clean$EVTYPE %in% names(headevents)[marinestorm],]$EVTYPE) 
+
+unique(kevents)
+
+kevent_tranf <- list("wind"= c(2,3,7,8,18),
+                     "flood"=c(5,6,17,19),
+                     "winter"=c(12,13),
+                     "marinestorm" =c(15,16))
+
+names(kevent_tranf)
+
+# two key operations:
+# set as other for the 3% which is not in the 20 key events
+# simplify list of key events
+
+SD_clean$EVTYPE[!(SD_clean$EVTYPE %in% kevents)]<-c("mixevents") 
+
+for (i in 1:4){
+    
+    ivents<-kevents[kevent_tranf[[i]]]
+    SD_clean$EVTYPE [SD_clean$EVTYPE %in% ivents ]<-names (kevent_tranf[i])
+}
+
+headevents<-head(sort(table(SD_clean$EVTYPE), decreasing=TRUE), n=20)
+
+sum(headevents)
+str(SD_clean)
+
+
+write.table(SD_clean,"data/SD_clean.txt", sep=";")
+
+######################################################################
+
+
+SD_clean<- read.table ("data/SD_clean.txt" , header=T, sep=";",  
+                       stringsAsFactors=F)
