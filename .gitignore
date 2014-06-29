@@ -36,3 +36,6 @@ Icon
 .Trashes
 
 *.RData
+*.bz2
+cache/__packages
+data/SD_pre_clean.txt
